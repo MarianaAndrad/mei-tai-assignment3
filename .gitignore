@@ -175,6 +175,7 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 dataset
-train_data/v1
+dataset_orige
+train_data/v*
 examples
-
+cache
