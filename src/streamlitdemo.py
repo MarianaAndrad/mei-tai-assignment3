@@ -11,7 +11,7 @@ from sklearn.metrics import classification_report
 from computations import Model
 
 PLOT_HEIGHT = 400
-SPLIT = "UNSEEN"  # "TEST" or "UNSEEN"
+SPLIT = "TEST"  # "TEST" or "UNSEEN"
 DATASET_NAME = "v2"
 
 model = Model(f"../train_data/{DATASET_NAME}/TRAIN")
@@ -21,7 +21,7 @@ def on_audio_click(file):
     # Create a temporary directory to store the uploaded file
     temp_dir = tempfile.mkdtemp()
     sig_path = file.split("/")[-1].replace("wav", "sig")
-    os.system(f"../GetMaxFreqs/bin/GetMaxFreqs -w {os.path.join(temp_dir, sig_path)} {file}")
+    os.system(f"cd ../train_data/{DATASET_NAME}; ./params.sh -w {os.path.join(temp_dir, sig_path)} {file}")
 
     # Predict the genre
     st.session_state["prediction"] = model.predict(os.path.join(temp_dir, sig_path))
@@ -78,7 +78,7 @@ def generate_metrics_report(root, cache, depth=0, path=""):
             temp_dir = tempfile.mkdtemp()
             sig_path = node.replace("wav", "sig")
             os.system(
-                f"../GetMaxFreqs/bin/GetMaxFreqs -w {os.path.join(temp_dir, sig_path)} {os.path.join(root, node)}")
+                f"cd ../train_data/{DATASET_NAME}; ./params.sh -w {os.path.join(temp_dir, sig_path)} {os.path.join(root, node)}")
 
             avg_scores, best_cases, top_cases = cache[node]
             part = path.split("/")[-1]
@@ -124,7 +124,7 @@ def generate_detailed_report(root, depth=0, path="", cache=None):
             temp_dir = tempfile.mkdtemp()
             sig_path = node.replace("wav", "sig")
             os.system(
-                f"../GetMaxFreqs/bin/GetMaxFreqs -w {os.path.join(temp_dir, sig_path)} {os.path.join(root, node)}")
+                f"cd ../train_data/{DATASET_NAME}; ./params.sh -w {os.path.join(temp_dir, sig_path)} {os.path.join(root, node)}")
 
             last_results = None
             for prediction in model.predict(os.path.join(temp_dir, sig_path)):
@@ -188,21 +188,29 @@ if __name__ == "__main__":
     prediction_placeholders = {
         "bz2": st.empty(),
         "gzip": st.empty(),
-        "lzma": st.empty()
+        "lzma": st.empty(),
+        "zstd": st.empty(),
+        "zlib": st.empty(),
     }
 
-    graph_grid = st.columns(3)
+    graph_grid_1 = st.columns(3)
+    graph_grid_2 = st.columns(3)
     graph_placeholders = {
-        "bz2": graph_grid[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "gzip": graph_grid[1].container(height=PLOT_HEIGHT, border=False).empty(),
-        "lzma": graph_grid[2].container(height=PLOT_HEIGHT, border=False).empty(),
+        "bz2": graph_grid_1[0].container(height=PLOT_HEIGHT, border=False).empty(),
+        "gzip": graph_grid_1[1].container(height=PLOT_HEIGHT, border=False).empty(),
+        "lzma": graph_grid_1[2].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zstd": graph_grid_2[0].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zlib": graph_grid_2[1].container(height=PLOT_HEIGHT, border=False).empty(),
     }
 
-    top_graph_grid = st.columns(3)
+    top_graph_grid_1 = st.columns(3)
+    top_graph_grid_2 = st.columns(3)
     top_graph_placeholders = {
-        "bz2": top_graph_grid[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "gzip": top_graph_grid[1].container(height=PLOT_HEIGHT, border=False).empty(),
-        "lzma": top_graph_grid[2].container(height=PLOT_HEIGHT, border=False).empty(),
+        "bz2": top_graph_grid_1[0].container(height=PLOT_HEIGHT, border=False).empty(),
+        "gzip": top_graph_grid_1[1].container(height=PLOT_HEIGHT, border=False).empty(),
+        "lzma": top_graph_grid_1[2].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zstd": top_graph_grid_2[0].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zlib": top_graph_grid_2[1].container(height=PLOT_HEIGHT, border=False).empty(),
     }
 
     if "prediction" in st.session_state:
@@ -211,7 +219,7 @@ if __name__ == "__main__":
                 if result is None:
                     continue
                 prediction_placeholders[method].write(
-                    f"Best case for {method}: {result['genre']} - \"{result['name']}\"")
+                    f"Best case for {method}: {result['genre']} - \"{result['name']}\" - {result['score']}")
 
             for method, genres in avg_scores.items():
                 fig = go.Figure(

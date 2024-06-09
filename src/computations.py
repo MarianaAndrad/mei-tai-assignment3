@@ -8,6 +8,8 @@ from collections import defaultdict
 
 import joblib
 import taglib
+import zstd
+import zlib
 
 mem_location = "../cache"
 memory = joblib.Memory(mem_location)
@@ -40,7 +42,15 @@ def compress_bz2(bindata):
     return len(bz2.compress(bindata))
 
 
-# TODO ZSTD, LZ4, ZLIB
+@cache_results
+def compress_zstd(bindata):
+    return len(zstd.compress(bindata))
+
+
+@cache_results
+def compress_zlib(bindata):
+    return len(zlib.compress(bindata))
+
 
 def ncd(bin_file_a, bin_file_b, method, data, fn):
     compress_a = fn(bin_file_a)
@@ -69,7 +79,7 @@ class Model(object):
         random.shuffle(self.dataset)  # provide a better ui experience, but not necessary (because genres)
 
     def predict(self, file_to_classify):
-        methods = ["bz2", "gzip", "lzma"] # TODO ZSTD, LZ4, ZLIB
+        methods = ["bz2", "gzip", "lzma", "zstd", "zlib"]
         binary_file = open(file_to_classify, "rb").read()
 
         gen = joblib.Parallel(n_jobs=-1, return_as="generator_unordered")(
@@ -100,7 +110,7 @@ class Model(object):
 
             if score < best_scores[method]:
                 best_scores[method] = score
-                best_cases[method] = data
+                best_cases[method] = {**data, "score": score}
 
             top_cases[method].append((score, data))
             top_cases[method] = sorted(top_cases[method], key=lambda x: x[0])[:10]
