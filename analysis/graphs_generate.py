@@ -8,7 +8,7 @@ import pandas as pd
 DIR_RESULTS = "../src/results"
 
 
-def concat_classification_results(_type):
+def concat_classification_results(_type, test_bool):
     ws_i = [0, 1, 2, 3, 4, 5, 6]
     sh_i = [7, 8, 9, 10, 11, 12, 13, 14]
     ds_i = [15, 16, 17, 18, 19, 20, 21, 22, 23]
@@ -26,23 +26,37 @@ def concat_classification_results(_type):
             continue
 
         file_path = os.path.join(DIR_RESULTS, file)
-        version = int(file.split("__")[0][1:])
-        if _type in file:
-            df = pd.read_csv(file_path)
-            if any(version == v for v in ws_i):
-                classification["ws"] = pd.concat([classification["ws"], df])
-            elif any(version == v for v in ds_i):
-                classification["ds"] = pd.concat([classification["ds"], df])
-            elif any(version == v for v in nf_i):
-                classification["nf"] = pd.concat([classification["nf"], df])
-            elif any(version == v for v in sh_i):
-                classification["sh"] = pd.concat([classification["sh"], df])
+        version = int(file.split("_")[0][1:])
+        print(version)
+        if test_bool and "TEST" in file:
+            if _type in file:
+                df = pd.read_csv(file_path)
+                if any(version == v for v in ws_i):
+                    classification["ws"] = pd.concat([classification["ws"], df])
+                elif any(version == v for v in ds_i):
+                    classification["ds"] = pd.concat([classification["ds"], df])
+                elif any(version == v for v in nf_i):
+                    classification["nf"] = pd.concat([classification["nf"], df])
+                elif any(version == v for v in sh_i):
+                    classification["sh"] = pd.concat([classification["sh"], df])
+        elif "UNSEEN" in file:
+            if _type in file:
+                df = pd.read_csv(file_path)
+                if any(version == v for v in ws_i):
+                    classification["ws"] = pd.concat([classification["ws"], df])
+                elif any(version == v for v in ds_i):
+                    classification["ds"] = pd.concat([classification["ds"], df])
+                elif any(version == v for v in nf_i):
+                    classification["nf"] = pd.concat([classification["nf"], df])
+                elif any(version == v for v in sh_i):
+                    classification["sh"] = pd.concat([classification["sh"], df])
 
     return classification
 
 
 def concat_results():
-    return concat_classification_results("genre"), concat_classification_results("music")
+    return concat_classification_results("genre", True), concat_classification_results("music", True), \
+    concat_classification_results("genre", False), concat_classification_results("music", False)
 
 
 def plot_noise_level_algorithm(classification, partition, save=False):
@@ -147,14 +161,14 @@ def plot_genre(classification_genre, partition, genre, param, save=False):
 
 def main():
     partition_list = [0.2, 0.5, 1]
-    classification_genre, classification_music = concat_results()
-    genres = classification_genre["ds"]["genre"].unique()
+    classification_genre_test, classification_music_test, classification_genre_unseen, classification_music_unseen = concat_results()
+    genres = classification_genre_test["ds"]["genre"].unique()
     param = ["ws", "ds", "nf", "sh"]
     for part in partition_list:
-        plot_music_algorithm_per_parameter(classification_music, part, save=True)
+        plot_music_algorithm_per_parameter(classification_music_test, part, save=True)
         for genre in genres:
             for p in param:
-                plot_genre(classification_genre, part, genre, p, save=True)
+                plot_genre(classification_genre_test, part, genre, p, save=True)
 
 
 if __name__ == "__main__":

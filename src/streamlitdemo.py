@@ -14,7 +14,8 @@ PLOT_HEIGHT = 400
 SPLIT = "TEST"  # "TEST" or "UNSEEN"
 DATASET_NAME = "v2"
 
-model = Model(f"../database/{DATASET_NAME}/TRAIN")
+# model = Model(f"../database/{DATASET_NAME}/TRAIN")
+model = None
 
 
 def on_audio_click(file):
@@ -227,6 +228,9 @@ def recursive_tree(root, depth=0, path=""):
 
 
 if __name__ == "__main__":
+    if model is None:
+        model = Model(f"../database/{DATASET_NAME}/TRAIN")
+
     # Streamlit App
     st.set_page_config(page_title="TAI Assignment 3", layout="wide")
     st.title("TAI Assignment 3")
