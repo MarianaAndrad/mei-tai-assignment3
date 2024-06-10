@@ -1,4 +1,5 @@
 import os
+import stat
 import tempfile
 import functools as ft
 import uuid
@@ -12,7 +13,7 @@ from computations import Model
 
 PLOT_HEIGHT = 400
 SPLIT = "TEST"  # "TEST" or "UNSEEN"
-DATASET_NAME = "v2"
+DATASET_NAME = "EXAMPLE"
 
 # model = Model(f"../database/{DATASET_NAME}/TRAIN")
 model = None
@@ -22,6 +23,10 @@ def on_audio_click(file):
     # Create a temporary directory to store the uploaded file
     temp_dir = tempfile.mkdtemp()
     sig_path = file.split("/")[-1].replace("wav", "sig")
+    # chmod the file to be executable
+    s = os.stat(f"../database/{DATASET_NAME}/params.sh")
+    #chmod +x ./params.sh
+    os.chmod(f"../database/{DATASET_NAME}/params.sh", s.st_mode | stat.S_IEXEC)
     os.system(f"cd ../database/{DATASET_NAME}; ./params.sh -w {os.path.join(temp_dir, sig_path)} {file}")
 
     # Predict the genre
@@ -218,7 +223,7 @@ def recursive_tree(root, depth=0, path=""):
             continue
 
         if os.path.isdir(os.path.join(root, node)):
-            with st.expander(f"{node}"):
+            with st.expander(f"Using {float(node) * 100}% of musics"):
                 recursive_tree(os.path.join(root, node), depth=depth + 1, path=os.path.join(path, node))
         else:
             with taglib.File(os.path.join(root, node)) as f:
@@ -232,60 +237,74 @@ if __name__ == "__main__":
         model = Model(f"../database/{DATASET_NAME}/TRAIN")
 
     # Streamlit App
-    st.set_page_config(page_title="TAI Assignment 3", layout="wide")
-    st.title("TAI Assignment 3")
+    st.set_page_config(page_title="Assignment 3 - TAI", layout="wide")
+    st.title("Assignment 3 - Music and Genre Likeness Using Information distances")
+    st.write("This application is used to predict the genre and name of a music file using the NCD algorithm.")
+    params = get_parameters(f"../database/{DATASET_NAME}/params.csv")
+    st.write(f"##### Parameters to be used in the computations:")
+    for key, value in list(params.items())[1:]:
+        st.markdown(f"- *{key}*: {value}")
 
     with st.sidebar:
         st.button("Run all and create report", on_click=ft.partial(run_all, f"../database/{DATASET_NAME}/{SPLIT}"))
+        st.write("Please select a music file to classify:")
         recursive_tree(f"../database/{DATASET_NAME}/{SPLIT}")
 
+    dropdowns = {
+        "bz2": st.expander("bz2"),
+        "gzip": st.expander("gzip"),
+        "lzma": st.expander("lzma"),
+        "zstd": st.expander("zstd"),
+        "zlib": st.expander("zlib"),
+    }
+
     prediction_placeholders = {
-        "bz2": st.empty(),
-        "gzip": st.empty(),
-        "lzma": st.empty(),
-        "zstd": st.empty(),
-        "zlib": st.empty(),
+        "bz2": dropdowns["bz2"].empty(),
+        "gzip": dropdowns["gzip"].empty(),
+        "lzma": dropdowns["lzma"].empty(),
+        "zstd": dropdowns["zstd"].empty(),
+        "zlib": dropdowns["zlib"].empty(),
     }
 
-    graph_grid_1 = st.columns(3)
-    graph_grid_2 = st.columns(3)
     graph_placeholders = {
-        "bz2": graph_grid_1[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "gzip": graph_grid_1[1].container(height=PLOT_HEIGHT, border=False).empty(),
-        "lzma": graph_grid_1[2].container(height=PLOT_HEIGHT, border=False).empty(),
-        "zstd": graph_grid_2[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "zlib": graph_grid_2[1].container(height=PLOT_HEIGHT, border=False).empty(),
+        "bz2": dropdowns["bz2"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "gzip": dropdowns["gzip"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "lzma": dropdowns["lzma"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zstd": dropdowns["zstd"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zlib": dropdowns["zlib"].container(height=PLOT_HEIGHT, border=False).empty(),
     }
 
-    top_graph_grid_1 = st.columns(3)
-    top_graph_grid_2 = st.columns(3)
     top_graph_placeholders = {
-        "bz2": top_graph_grid_1[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "gzip": top_graph_grid_1[1].container(height=PLOT_HEIGHT, border=False).empty(),
-        "lzma": top_graph_grid_1[2].container(height=PLOT_HEIGHT, border=False).empty(),
-        "zstd": top_graph_grid_2[0].container(height=PLOT_HEIGHT, border=False).empty(),
-        "zlib": top_graph_grid_2[1].container(height=PLOT_HEIGHT, border=False).empty(),
+        "bz2": dropdowns["bz2"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "gzip": dropdowns["gzip"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "lzma": dropdowns["lzma"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zstd": dropdowns["zstd"].container(height=PLOT_HEIGHT, border=False).empty(),
+        "zlib": dropdowns["zlib"].container(height=PLOT_HEIGHT, border=False).empty(),
     }
 
     if "prediction" in st.session_state:
         for avg_scores, best_cases, top_cases in st.session_state["prediction"]:
-            for method, result in best_cases.items():
-                if result is None:
-                    continue
-                prediction_placeholders[method].write(
-                    f"Best case for {method}: {result['genre']} - \"{result['name']}\" - {result['score']}")
+            for method in best_cases.keys():
+                for result in best_cases.values():
+                    if result is None:
+                        continue
 
-            for method, genres in avg_scores.items():
-                fig = go.Figure(
-                    data=[go.Bar(x=list(genres.keys()), y=list(genres.values()))],
-                    layout=go.Layout(title=f"Average NCD Scores for {method}", height=PLOT_HEIGHT)
-                )
-                graph_placeholders[method].plotly_chart(fig)
+                    prediction_placeholders[method].markdown(f"""# Best case for {method} 
+- **Genre**: {result['genre']}
+- **Name**: {result['name']}
+- **Score**: {result['score']}""")
 
-            for method, cases in top_cases.items():
-                fig = go.Figure(
-                    data=[go.Bar(x=[f"{case['genre']} - \"{case['name']}\"" for _, case in cases],
-                                 y=[score for score, _ in cases])],
-                    layout=go.Layout(title=f"Top 10 NCD Scores for {method}", height=PLOT_HEIGHT)
-                )
-                top_graph_placeholders[method].plotly_chart(fig)
+                for genres in avg_scores.values():
+                    fig = go.Figure(
+                        data=[go.Bar(x=list(genres.keys()), y=list(genres.values()))],
+                        layout=go.Layout(title=f"Average NCD Scores for {method}", height=PLOT_HEIGHT)
+                    )
+                    graph_placeholders[method].plotly_chart(fig)
+
+                for cases in top_cases.values():
+                    fig = go.Figure(
+                        data=[go.Bar(x=[f"{case['genre']} - \"{case['name']}\"" for _, case in cases],
+                                     y=[score for score, _ in cases])],
+                        layout=go.Layout(title=f"Top 10 NCD Scores for {method}", height=PLOT_HEIGHT)
+                    )
+                    top_graph_placeholders[method].plotly_chart(fig)

@@ -176,9 +176,11 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 datasets
 database/v*
+database/EXAMPLE
 datasets/examples
 cache
-src/results
+src/results/*.csv
+src/results/*.md
 analysis/plots
 analysis/tables
-src/v*
+src/*.md

@@ -89,7 +89,7 @@ def plot_noise_level_algorithm(classification, partition, save=False):
         plt.show()
 
 
-def plot_music_algorithm_per_parameter(classification_music, partition, save=False):
+def plot_music_algorithm_per_parameter(classification_music, partition, save=False, test=True):
     algorithms = classification_music["ds"]["methodCompression"].unique()
     parameters = ["ws", "ds", "nf", "sh"]
 
@@ -119,13 +119,13 @@ def plot_music_algorithm_per_parameter(classification_music, partition, save=Fal
     plt.tight_layout()
 
     if save:
-        plt.savefig(f"plots/music_algorithm_per_parameter_{partition}.png")
+        plt.savefig(f"plots/music_algorithm_per_parameter_{partition}_{'test' if test else 'unseen'}.png")
         plt.close()
     else:
         plt.show()
 
 
-def plot_genre(classification_genre, partition, genre, param, save=False):
+def plot_genre(classification_genre, partition, genre, param, save=False, test=True):
     algorithms = classification_genre[param]["methodCompression"].unique()
     metrics = ["accuracy", "f1-score", "precision", "recall"]
 
@@ -153,7 +153,7 @@ def plot_genre(classification_genre, partition, genre, param, save=False):
     plt.tight_layout()
 
     if save:
-        plt.savefig(f"plots/genre_{genre}_per_parameter_{partition}.png")
+        plt.savefig(f"plots/genre_{genre}_per_parameter_{partition}_{param}_{'test' if test else 'unseen'}.png")
         plt.close()
     else:
         plt.show()
@@ -166,9 +166,11 @@ def main():
     param = ["ws", "ds", "nf", "sh"]
     for part in partition_list:
         plot_music_algorithm_per_parameter(classification_music_test, part, save=True)
+        plot_music_algorithm_per_parameter(classification_music_unseen, part, save=True, test=False)
         for genre in genres:
             for p in param:
                 plot_genre(classification_genre_test, part, genre, p, save=True)
+                plot_genre(classification_genre_unseen, part, genre, p, save=True, test=False)
 
 
 if __name__ == "__main__":

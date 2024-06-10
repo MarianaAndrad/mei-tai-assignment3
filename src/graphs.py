@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-import streamlitdemo as main
+import app as main
 from src.computations import Model
 
 DATASET = "../database"
