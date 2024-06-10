@@ -9,8 +9,6 @@ import numpy as np
 import taglib
 from tqdm import tqdm
 
-dir_results = "/media/marianaandrade/Seagate/Universidade/results"
-
 
 def template(ws, sh, ds, nf):
     return f"""#!/bin/bash
@@ -37,10 +35,10 @@ def split_test(test_files, percentages, root, noise_level, version, genre, count
             accumulated = 0
             iteration = 0
             while accumulated < len(scaled):
-                sf.write(f"{dir_results}/{version}/{type_str}/{percentage}/aud{count[percentage]}_{iteration}.wav",
+                sf.write(f"./{version}/{type_str}/{percentage}/aud{count[percentage]}_{iteration}.wav",
                          scaled[accumulated:accumulated + int(len(scaled) * percentage)], sr, format='wav')
 
-                with taglib.File(f"{dir_results}/{version}/{type_str}/{percentage}/aud{count[percentage]}_{iteration}.wav",
+                with taglib.File(f"./{version}/{type_str}/{percentage}/aud{count[percentage]}_{iteration}.wav",
                                  save_on_exit=True) as f:
                     f.tags["COMM"] = [f"{genre};{audio.split('.')[0]}"]
 
@@ -51,15 +49,15 @@ def split_test(test_files, percentages, root, noise_level, version, genre, count
 
 
 def split_train(version, database_files, root, db_count, genre):
-    os.makedirs(f"{dir_results}/{version}/TRAIN", exist_ok=True)
+    os.makedirs(f"./{version}/TRAIN", exist_ok=True)
     for audio in database_files:
         aud, sr = librosa.load(os.path.join(root, audio), mono=False, sr=44100)
         aud = aud.T
-        sf.write(f"{dir_results}/{version}/TRAIN/aud{db_count}.wav", aud, sr, format='wav')
+        sf.write(f"./{version}/TRAIN/aud{db_count}.wav", aud, sr, format='wav')
         os.system(
-            f"cd {dir_results}/{version}; {dir_results}/params.sh -w {dir_results}/{version}/TRAIN/aud{db_count}.sig {dir_results}/{version}/TRAIN/aud{db_count}.wav")
+            f"cd ./{version}; ./params.sh -w ../../database/{version}/TRAIN/aud{db_count}.sig ../../database/{version}/TRAIN/aud{db_count}.wav")
 
-        with taglib.File(f"{dir_results}/{version}/TRAIN/aud{db_count}.wav", save_on_exit=True) as f:
+        with taglib.File(f"./{version}/TRAIN/aud{db_count}.wav", save_on_exit=True) as f:
             f.tags["COMM"] = [f"{genre};{audio.split('.')[0]}"]
         db_count += 1
 
@@ -81,8 +79,8 @@ def main(noise_level, n_test_audios_genres, n_test_unseen_genres, n_total, versi
     test_count = defaultdict(lambda: 0)
     unseen_count = defaultdict(lambda: 0)
 
-    os.mkdir(f"{dir_results}/{version}")
-    with open(f"{dir_results}/{version}/params.csv", "w") as f:
+    os.mkdir(f"./{version}")
+    with open(f"./{version}/params.csv", "w") as f:
         f.write("Parameter,Value\n")
         f.write(f"ws,{ws}\n")
         f.write(f"sh,{sh}\n")
@@ -90,11 +88,11 @@ def main(noise_level, n_test_audios_genres, n_test_unseen_genres, n_total, versi
         f.write(f"nf,{nf}\n")
         f.write(f"noise_level,{noise_level}\n")
 
-    with open(f"{dir_results}/{version}/params.sh", "w") as f:
+    with open(f"./{version}/params.sh", "w") as f:
         f.write(template(ws, sh, ds, nf))
 
-    st = os.stat(f"{dir_results}/{version}/params.sh")
-    os.chmod(f"{dir_results}/{version}/params.sh", st.st_mode | stat.S_IEXEC)
+    st = os.stat(f"./{version}/params.sh")
+    os.chmod(f"./{version}/params.sh", st.st_mode | stat.S_IEXEC)
 
     for root, dirs, files in tqdm(os.walk(dataset_dir)):
         if len(files) == 0:
