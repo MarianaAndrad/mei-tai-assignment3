@@ -178,3 +178,6 @@ datasets
 database/v*
 datasets/examples
 cache
+src/results
+analysis/plots
+analysis/tables
