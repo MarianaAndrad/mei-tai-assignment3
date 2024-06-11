@@ -60,7 +60,7 @@ def run_all(root, report_prefix=""):
             print("Accuracy: ", round(sum(Xf[method]) / len(Xf[method]), ndigits=2), file=f)
 
     with open(f"results/{report_prefix}__classification_genre.csv", "w") as f:
-        f.write("ws,ds,nf,sh,genre,precision,recall,f1-score,accuracy,methodCompression,partition\n")
+        f.write("ws,ds,nf,sh,noise_level,genre,precision,recall,f1-score,accuracy,methodCompression,partition\n")
         for method in methods:
             accuracy_per_genre = dict()
             precision_per_genre = dict()
@@ -82,6 +82,7 @@ def run_all(root, report_prefix=""):
                     f"{parameters['ds']},"
                     f"{parameters['nf']},"
                     f"{parameters['sh']},"
+                    f"{parameters['noise_level']},"
                     f"{genre},"
                     f"{round(precision_per_genre[genre], ndigits=2)},"
                     f"{round(recall_per_genre[genre], ndigits=2)},"
@@ -91,13 +92,14 @@ def run_all(root, report_prefix=""):
                     f"{method[1]}\n")
 
     with open(f"results/{report_prefix}__classification_music.csv", "w") as f:
-        f.write("ws,ds,nf,sh,accuracy,methodCompression,partition\n")
+        f.write("ws,ds,nf,sh,noise_level,accuracy,methodCompression,partition\n")
         for method in methods:
             f.write(
                 f"{parameters['ws']},"
                 f"{parameters['ds']},"
                 f"{parameters['nf']},"
                 f"{parameters['sh']},"
+                f"{parameters['noise_level']},"
                 f"{round(sum(Xf[method]) / len(Xf[method]), ndigits=2)},"
                 f"{method[0]},"
                 f"{method[1]}\n")
